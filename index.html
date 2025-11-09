@@ -380,16 +380,29 @@
     });
 
     document.getElementById("cancelBooking").addEventListener("click",()=>bookingForm.style.display="none");
+document.getElementById("sendMessage").addEventListener("click", ()=>{
+  const msg = document.getElementById("privateMessage").value.trim();
+  if(!msg){ 
+    alert("Écris un message !"); 
+    return; 
+  }
 
-    document.getElementById("sendMessage").addEventListener("click", ()=>{
-      const msg=document.getElementById("privateMessage").value.trim();
-      if(!msg){alert("Écris un message !"); return;}
-      const newMsg={message: msg, date: new Date().toISOString()};
-      messagesList.push(newMsg);
-      localStorage.setItem("messagesList",JSON.stringify(messagesList));
-      updateMessagesAdmin();
-      alert("✅ Message envoyé !");
-      document.getElementById("privateMessage").value="";
+  // 🔹 Envoi du message via EmailJS
+  emailjs.send("service_xxxxxx", "template_yyyyyy", {
+    message: msg,
+    date: new Date().toLocaleString("fr-FR")
+  }).then(() => {
+    alert("✅ Message envoyé avec succès !");
+    document.getElementById("privateMessage").value = "";
+
+    // 🔸 Redirection vers ton lien (facultatif)
+    window.location.href = "https://wa.me/33612345678"; // remplace par ton lien (WhatsApp, site, etc.)
+  }).catch(err => {
+    console.error("Erreur EmailJS :", err);
+    alert("❌ Une erreur est survenue lors de l’envoi.");
+  });
+});
+    
     });
 
     const adminButton=document.getElementById("adminButton");
