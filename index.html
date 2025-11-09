@@ -29,6 +29,7 @@
       background: linear-gradient(120deg, #bcd7ff, #e4f0ff, #bcd7ff);
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
     header {
@@ -61,7 +62,7 @@
 
     .muted { color: var(--muted); font-size: 13px; }
 
-    .days { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
+    .days { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; scroll-behavior: smooth; }
 
     .day {
       min-width: 110px;
@@ -78,7 +79,6 @@
     .day:hover { background: var(--accent-light); transform: scale(1.03); }
     .selected-day { border: 2px solid var(--accent); background: var(--accent-light); }
 
-    /* ✅ surbrillance du jour actuel */
     .today {
       background: #fffae6;
       border: 2px solid #ffb300;
@@ -112,7 +112,8 @@
     .slot.booked { background: #f3f4f6; color: #6b7280; cursor: default; }
 
     label { display: block; margin-top: 10px; font-size: 13px; color: var(--muted); }
-    input { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #dfe3ea; margin-top: 6px; }
+    input, textarea { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #dfe3ea; margin-top: 6px; }
+    textarea { resize: vertical; }
 
     footer {
       width: 100%;
@@ -122,7 +123,6 @@
       font-size: 13px;
     }
 
-    /* --- BOUTON ADMIN --- */
     #adminButton {
       position: fixed;
       bottom: 20px;
@@ -139,7 +139,6 @@
       z-index: 10;
     }
 
-    /* --- PANNEAU ADMIN --- */
     #adminArea {
       display: none;
       position: fixed;
@@ -156,7 +155,7 @@
       z-index: 9;
     }
 
-    #rdvList li {
+    #rdvList li, #messagesList li {
       padding:6px 0;
       border-bottom:1px solid #e5e7eb;
       font-size: 14px;
@@ -173,7 +172,6 @@
       border: none;
     }
 
-    /* --- MODAL LOGIN --- */
     #adminLogin {
       display: none;
       position: fixed;
@@ -217,7 +215,7 @@
 <body>
   <header>
     <img src="images/fond.jpg" alt="Logo" class="header-logo">
-    <h1>Appli RDV — Réservations</h1>
+    <h1>Renovation et polissage/lustrage — Tous véhicules</h1>
   </header>
 
   <main class="container">
@@ -234,28 +232,34 @@
         <label>Email</label>
         <input id="clientEmail" type="email" placeholder="exemple@domaine.com">
         <label>Téléphone</label>
-        <input id="clientPhone" type="tel" placeholder="06 12 34 56 78">
+        <input id="clientPhone" type="tel" placeholder="tel">
         <button id="confirmBooking">Confirmer la réservation</button>
         <button id="cancelBooking" style="background:#e5e7eb;color:#111">Annuler</button>
       </div>
     </section>
+
+    <section class="card" style="margin-top:20px;">
+      <h2>Envoyer un message privé</h2>
+      <label>Message</label>
+      <textarea id="privateMessage" rows="3" placeholder="Écris ton message ici"></textarea>
+      <button id="sendMessage">Envoyer</button>
+    </section>
   </main>
 
-  <footer>© 2025 Appli RDV — Tous droits réservés</footer>
+  <footer>© 2025 YGD — Tous droits réservés</footer>
 
-  <!-- Bouton Admin -->
   <button id="adminButton" title="Administration">⚙️</button>
 
-  <!-- Panneau Admin -->
   <div id="adminArea">
     <button id="closeAdmin">Fermer</button>
     <h4 style="margin-top:10px;">Liste des rendez-vous :</h4>
     <ul id="rdvList"></ul>
+    <h4 style="margin-top:20px;">Messages privés :</h4>
+    <ul id="messagesList"></ul>
     <button id="printRdv" style="background:#22c55e;margin-top:8px;">🖨️ Imprimer</button>
     <button id="clearRdv" style="background:#ef4444;margin-top:8px;">🗑️ Effacer</button>
   </div>
 
-  <!-- Connexion Admin -->
   <div id="adminLogin">
     <div class="login-box">
       <h3>Connexion Admin</h3>
@@ -266,10 +270,11 @@
   </div>
 
   <script>
-    const slotsMock = ["09:00","10:00","11:00","14:00","15:00"];
+    const slotsMock = ["09:00","13:00"];
     let selectedDay = null;
     let selectedSlot = null;
     let rdvList = JSON.parse(localStorage.getItem("rdvList") || "[]");
+    let messagesList = JSON.parse(localStorage.getItem("messagesList") || "[]");
 
     const daysContainer = document.getElementById("days");
     const slotsWrapper = document.getElementById("slotsWrapper");
@@ -277,30 +282,34 @@
 
     function renderDays() {
       const today = new Date();
-      const todayKey = today.toISOString().split("T")[0];
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-
-      for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      const numDays = 30; // 30 jours à partir d'aujourd'hui
+      for (let i = 0; i < numDays; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        
         const dayDiv = document.createElement("div");
         dayDiv.className = "day";
         const dKey = d.toISOString().split("T")[0];
         dayDiv.innerText = d.toLocaleDateString("fr-FR", { weekday:'short', day:'numeric', month:'short' });
-        if (dKey === todayKey) dayDiv.classList.add("today");
+        if (i === 0) dayDiv.classList.add("today");
+
         dayDiv.addEventListener("click", ()=> {
-          document.querySelectorAll(".day").forEach(dd=>dd.classList.remove("selected-day"));
+          document.querySelectorAll(".day").forEach(dd => dd.classList.remove("selected-day"));
           dayDiv.classList.add("selected-day");
-          selectedDay = new Date(d);
+          selectedDay = new Date(d.getTime());
           renderSlots();
         });
+
         daysContainer.appendChild(dayDiv);
       }
+
+      const todayDiv = document.querySelector(".today");
+      if(todayDiv) todayDiv.scrollIntoView({behavior:"smooth", inline:"center"});
     }
 
     function renderSlots(){
       slotsWrapper.innerHTML = "";
+      if(!selectedDay) return;
       const dateKey = selectedDay.toISOString().split("T")[0];
       slotsMock.forEach(time=>{
         const slotDiv = document.createElement("div");
@@ -322,11 +331,24 @@
     function updateAdminList(){
       const list=document.getElementById("rdvList");
       list.innerHTML="";
-      if(rdvList.length===0){list.innerHTML="<li>Aucun rendez-vous enregistré.</li>";return;}
+      if(rdvList.length===0){list.innerHTML="<li>Aucun rendez-vous enregistré.</li>";}
       rdvList.forEach(r=>{
         const li=document.createElement("li");
         const d=new Date(r.date);
         li.textContent=`${d.toLocaleDateString("fr-FR")} à ${r.time} — ${r.name} (${r.email}, ${r.phone})`;
+        list.appendChild(li);
+      });
+      updateMessagesAdmin();
+    }
+
+    function updateMessagesAdmin(){
+      const list=document.getElementById("messagesList");
+      list.innerHTML="";
+      if(messagesList.length===0){list.innerHTML="<li>Aucun message.</li>";}
+      messagesList.forEach(m=>{
+        const li=document.createElement("li");
+        const d=new Date(m.date);
+        li.textContent=`[${d.toLocaleString()}] ${m.message}`;
         list.appendChild(li);
       });
     }
@@ -349,12 +371,22 @@
 
     document.getElementById("cancelBooking").addEventListener("click",()=>bookingForm.style.display="none");
 
-    // --- ADMIN ---
+    document.getElementById("sendMessage").addEventListener("click", ()=>{
+      const msg=document.getElementById("privateMessage").value.trim();
+      if(!msg){alert("Écris un message !"); return;}
+      const newMsg={message: msg, date: new Date().toISOString()};
+      messagesList.push(newMsg);
+      localStorage.setItem("messagesList",JSON.stringify(messagesList));
+      updateMessagesAdmin();
+      alert("✅ Message envoyé !");
+      document.getElementById("privateMessage").value="";
+    });
+
     const adminButton=document.getElementById("adminButton");
     const adminArea=document.getElementById("adminArea");
     const adminLogin=document.getElementById("adminLogin");
     const adminPass=document.getElementById("adminPass");
-    const adminPasswordHash="240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // SHA-256("admin123")
+    const adminPasswordHash="240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
 
     async function hashText(t){const b=new TextEncoder().encode(t);const h=await crypto.subtle.digest("SHA-256",b);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,"0")).join("");}
 
@@ -366,14 +398,8 @@
       else alert("Mot de passe incorrect !");
     });
     document.getElementById("closeAdmin").addEventListener("click",()=>adminArea.style.display="none");
-    document.getElementById("clearRdv").addEventListener("click",()=>{if(confirm("Effacer tous les rendez-vous ?")){rdvList=[];localStorage.removeItem("rdvList");updateAdminList();}});
-    document.getElementById("printRdv").addEventListener("click",()=>{
-      const w=window.open("","_blank");
-      w.document.write("<h3>Liste des rendez-vous</h3><ul>");
-      rdvList.forEach(r=>{const d=new Date(r.date);w.document.write(`<li>${d.toLocaleDateString("fr-FR")} à ${r.time} — ${r.name} (${r.email}, ${r.phone})</li>`);});
-      w.document.write("</ul>");
-      w.print();
-    });
+    document.getElementById("clearRdv").addEventListener("click",()=>{if(confirm("Effacer tous les rendez-vous et messages ?")){rdvList=[];messagesList=[];localStorage.removeItem("rdvList");localStorage.removeItem("messagesList");updateAdminList();}});
+    document.getElementById("printRdv").addEventListener("click",()=>{window.print();});
   </script>
 </body>
 </html>
