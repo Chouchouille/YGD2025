@@ -1,438 +1,93 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Appli RDV - Professionnelle</title>
-
-  <!-- ✅ EmailJS -->
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <script>
-    (function() {
-      emailjs.init("FkrOw1vMA_YmmmO6i"); // ✅ Ta clé publique EmailJS
-    })();
-  </script>
-
-  <style>
-    :root {
-      --accent: #007aff;
-      --accent-light: #e6f1ff;
-      --muted: #6b7280;
-      --card-bg: rgba(255, 255, 255, 0.9);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: "Inter", ui-sans-serif, system-ui, Arial;
-      min-height: 100vh;
-      color: #0f1724;
-      background: linear-gradient(120deg, #bcd7ff, #e4f0ff, #bcd7ff);
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-    }
-
-    header {
-      text-align: center;
-      background: linear-gradient(135deg, #0055cc, #0099ff);
-      padding: 25px 0 35px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    }
-
-    .header-logo {
-      width: 100%;
-      max-width: 400px;
-      display: block;
-      margin: 0 auto 10px;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    }
-
-    header h1 { font-size: 28px; color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.4); }
-
-    .container { max-width: 960px; margin: 0 auto; padding: 0 12px; flex: 1; }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 20px;
-      margin-top: 24px;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-    }
-
-    .muted { color: var(--muted); font-size: 13px; }
-
-    .days { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; scroll-behavior: smooth; }
-
-    .day {
-      min-width: 110px;
-      padding: 12px;
-      border-radius: 16px;
-      background: #fff;
-      text-align: center;
-      cursor: pointer;
-      font-weight: 600;
-      transition: 0.2s;
-      flex-shrink: 0;
-    }
-
-    .day:hover { background: var(--accent-light); transform: scale(1.03); }
-    .selected-day { border: 2px solid var(--accent); background: var(--accent-light); }
-
-    .today {
-      background: #fffae6;
-      border: 2px solid #ffb300;
-      box-shadow: 0 0 8px rgba(255,179,0,0.6);
-    }
-
-    button {
-      background: var(--accent);
-      color: white;
-      border: 0;
-      padding: 12px 18px;
-      border-radius: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-      margin-top: 10px;
-    }
-
-    button:hover { background: #005ed6; }
-
-    .slot {
-      display: inline-block;
-      margin: 6px 6px 0 0;
-      padding: 8px 14px;
-      border-radius: 12px;
-      background: #eef8ff;
-      color: #044f9a;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .slot.booked { background: #f3f4f6; color: #6b7280; cursor: default; }
-
-    label { display: block; margin-top: 10px; font-size: 13px; color: var(--muted); }
-    input, textarea { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #dfe3ea; margin-top: 6px; }
-    textarea { resize: vertical; }
-
-    footer {
-      width: 100%;
-      padding: 18px 0;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    #adminButton {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #6b7280;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      font-size: 20px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 10;
-    }
-
-    #adminArea {
-      display: none;
-      position: fixed;
-      bottom: 80px;
-      right: 20px;
-      width: 320px;
-      max-height: 70vh;
-      overflow-y: auto;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-      padding: 16px;
-      backdrop-filter: blur(8px);
-      z-index: 9;
-    }
-
-    #rdvList li, #messagesList li {
-      padding:6px 0;
-      border-bottom:1px solid #e5e7eb;
-      font-size: 14px;
-    }
-
-    #closeAdmin {
-      background: #e5e7eb;
-      color: #111;
-      padding: 6px 10px;
-      border-radius: 8px;
-      float: right;
-      font-size: 12px;
-      cursor: pointer;
-      border: none;
-    }
-
-    #adminLogin {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,64,0.45);
-      backdrop-filter: blur(4px);
-      justify-content: center;
-      align-items: center;
-      z-index: 20;
-    }
-
-    .login-box {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      width: 280px;
-      text-align: center;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .login-box h3 { margin-bottom: 14px; }
-    .login-box input { margin-top: 8px; padding: 10px; width: 100%; border-radius: 10px; border: 1px solid #ccc; }
-    .login-box button { margin-top: 12px; width: 100%; }
-
-    @media (max-width: 600px) {
-      header h1 { font-size: 22px; }
-      .header-logo { max-width: 90%; }
-      .day { min-width: 90px; font-size: 13px; }
-      button { width: 100%; }
-      #adminArea { width: 90%; right: 5%; bottom: 100px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réservation RDV</title>
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  .slot { display: inline-block; margin: 5px; padding: 10px; border: 1px solid #333; cursor: pointer; }
+  .selected { background-color: #aaf; }
+  #bookingForm { display: none; margin-top: 20px; }
+  input { display: block; margin: 10px 0; padding: 5px; width: 250px; }
+</style>
 </head>
-
 <body>
-  <header>
-    <img src="images/fond.jpg" alt="Logo" class="header-logo">
-    <h1>Renovation et polissage/lustrage — Tous véhicules</h1>
-  </header>
 
-  <main class="container">
-    <section class="card">
-      <h2>Réserver un rendez-vous</h2>
-      <div class="muted">Choisis une date, puis un créneau disponible.</div>
-      <div id="days" class="days"></div>
-      <div id="slotsWrapper" style="margin-top:12px"></div>
+<h1>Réserver un rendez-vous</h1>
 
-      <div id="bookingForm" style="display:none;margin-top:12px">
-        <h3>Formulaire de réservation</h3>
-        <label>Nom</label>
-        <input id="clientName" placeholder="Prénom Nom">
-        <label>Email</label>
-        <input id="clientEmail" type="email" placeholder="exemple@domaine.com">
-        <label>Téléphone</label>
-        <input id="clientPhone" type="tel" placeholder="tel">
-        <button id="confirmBooking">Confirmer la réservation</button>
-        <button id="cancelBooking" style="background:#e5e7eb;color:#111">Annuler</button>
-      </div>
-    </section>
+<div id="slotsWrapper"></div>
 
-    <section class="card" style="margin-top:20px;">
-      <h2>Envoyer un message privé</h2>
-      <label>Message</label>
-      <textarea id="privateMessage" rows="3" placeholder="Écris ton message ici"></textarea>
-      <button id="sendMessage">Envoyer</button>
-    </section>
-  </main>
+<div id="bookingForm">
+  <h3>Vos informations</h3>
+  <input type="text" id="clientName" placeholder="Nom complet">
+  <input type="email" id="clientEmail" placeholder="Email">
+  <input type="tel" id="clientPhone" placeholder="Téléphone">
+  <button id="confirmBooking">Confirmer RDV</button>
+</div>
 
-  <footer>© 2025 YGD — Tous droits réservés</footer>
+<script>
+  emailjs.init("VOTRE_USER_ID_EMAILJS"); // Remplacez par votre user ID
 
-  <button id="adminButton" title="Administration">⚙️</button>
+  const slotsMock = ["09:00","10:00","11:00","14:00","15:00"];
+  let selectedSlot = null;
+  const slotsWrapper = document.getElementById("slotsWrapper");
+  const bookingForm = document.getElementById("bookingForm");
 
-  <div id="adminArea">
-    <button id="closeAdmin">Fermer</button>
-    <h4 style="margin-top:10px;">Liste des rendez-vous :</h4>
-    <ul id="rdvList"></ul>
-    <h4 style="margin-top:20px;">Messages privés :</h4>
-    <ul id="messagesList"></ul>
-    <button id="printRdv" style="background:#22c55e;margin-top:8px;">🖨️ Imprimer</button>
-    <button id="clearRdv" style="background:#ef4444;margin-top:8px;">🗑️ Effacer</button>
-  </div>
-
-  <div id="adminLogin">
-    <div class="login-box">
-      <h3>Connexion Admin</h3>
-      <input type="password" id="adminPass" placeholder="Mot de passe">
-      <button id="loginSubmit">Se connecter</button>
-      <button id="loginCancel" style="background:#e5e7eb;color:#111;">Annuler</button>
-    </div>
-  </div>
-
-  <script>
-    const slotsMock = ["09:00","13:00"];
-    let selectedDay = null;
-    let selectedSlot = null;
-    let rdvList = JSON.parse(localStorage.getItem("rdvList") || "[]");
-    let messagesList = JSON.parse(localStorage.getItem("messagesList") || "[]");
-
-    const daysContainer = document.getElementById("days");
-    const slotsWrapper = document.getElementById("slotsWrapper");
-    const bookingForm = document.getElementById("bookingForm");
-
-    function renderDays() {
-      const today = new Date();
-      const numDays = 30;
-      for (let i = 0; i < numDays; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() + i);
-        
-        const dayDiv = document.createElement("div");
-        dayDiv.className = "day";
-        dayDiv.innerText = d.toLocaleDateString("fr-FR", { weekday:'short', day:'numeric', month:'short' });
-        if (i === 0) dayDiv.classList.add("today");
-
-        dayDiv.addEventListener("click", ()=> {
-          document.querySelectorAll(".day").forEach(dd => dd.classList.remove("selected-day"));
-          dayDiv.classList.add("selected-day");
-          selectedDay = new Date(d.getTime());
-          renderSlots();
-        });
-
-        daysContainer.appendChild(dayDiv);
-      }
-
-      const todayDiv = document.querySelector(".today");
-      if(todayDiv) todayDiv.scrollIntoView({behavior:"smooth", inline:"center"});
-    }
-
-    function renderSlots(){
-      slotsWrapper.innerHTML = "";
-      if(!selectedDay) return;
-      const dateKey = selectedDay.toISOString().split("T")[0];
-      slotsMock.forEach(time=>{
-        const slotDiv = document.createElement("div");
-        slotDiv.className = "slot";
-        slotDiv.innerText = time;
-        const booked = rdvList.find(r=>r.date===dateKey && r.time===time);
-        if(booked){ slotDiv.classList.add("booked"); slotDiv.innerText += " (réservé)"; }
-        else slotDiv.addEventListener("click", ()=> { selectedSlot = time; bookingForm.style.display = "block"; });
-        slotsWrapper.appendChild(slotDiv);
-      });
-    }
-
-    function saveRdv(name,email,phone,date,time){
-      rdvList.push({name,email,phone,date,time});
-      localStorage.setItem("rdvList",JSON.stringify(rdvList));
-      updateAdminList();
-    }
-
-    function updateAdminList(){
-      const list=document.getElementById("rdvList");
-      list.innerHTML="";
-      if(rdvList.length===0){list.innerHTML="<li>Aucun rendez-vous enregistré.</li>";}
-      rdvList.forEach(r=>{
-        const li=document.createElement("li");
-        const d=new Date(r.date);
-        li.textContent=`${d.toLocaleDateString("fr-FR")} à ${r.time} — ${r.name} (${r.email}, ${r.phone})`;
-        list.appendChild(li);
-      });
-      updateMessagesAdmin();
-    }
-
-    function updateMessagesAdmin(){
-      const list=document.getElementById("messagesList");
-      list.innerHTML="";
-      if(messagesList.length===0){list.innerHTML="<li>Aucun message.</li>";}
-      messagesList.forEach(m=>{
-        const li=document.createElement("li");
-        const d=new Date(m.date);
-        li.textContent=`[${d.toLocaleString()}] ${m.message}`;
-        list.appendChild(li);
-      });
-    }
-
-    renderDays(); 
-    updateAdminList();
-
-    // ✅ ENVOI MESSAGE
-    document.getElementById("sendMessage").addEventListener("click", ()=>{
-      const msg = document.getElementById("privateMessage").value.trim();
-      if(!msg){ alert("Écris un message !"); return; }
-
-      emailjs.send("template_4pr16pd", "template_message_client", {
-        message: msg,
-        date: new Date().toLocaleString("fr-FR")
-      }).then(()=>{
-        alert("✅ Message envoyé avec succès !");
-        document.getElementById("privateMessage").value = "";
-        window.location.href = "https://wa.me/33612345678"; // 🔗 ton lien
-      }).catch(err=>{
-        console.error("Erreur EmailJS :", err);
-        alert("❌ Une erreur est survenue lors de l’envoi.");
-      });
+  // Afficher les créneaux
+  slotsMock.forEach(time=>{
+    const slotDiv = document.createElement("div");
+    slotDiv.className = "slot";
+    slotDiv.innerText = time;
+    slotDiv.addEventListener("click", ()=> {
+      selectedSlot = time;
+      document.querySelectorAll(".slot").forEach(s=>s.classList.remove("selected"));
+      slotDiv.classList.add("selected");
+      bookingForm.style.display = "block";
     });
+    slotsWrapper.appendChild(slotDiv);
+  });
 
-    // ✅ ENVOI RDV
-    document.getElementById("confirmBooking").addEventListener("click", ()=>{
-      const name=document.getElementById("clientName").value.trim();
-      const email=document.getElementById("clientEmail").value.trim();
-      const phone=document.getElementById("clientPhone").value.trim();
-      if(!name||!email||!phone||!selectedDay||!selectedSlot){alert("Remplis tous les champs !");return;}
-      const dateKey=selectedDay.toISOString().split("T")[0];
-      saveRdv(name,email,phone,dateKey,selectedSlot);
+  // Validation
+  function validateBooking(name,email,phone){
+    if(!name || !email || !phone) return "Tous les champs sont obligatoires !";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!emailRegex.test(email)) return "Email invalide !";
+    const phoneRegex = /^[0-9\s+()-]{6,20}$/;
+    if(!phoneRegex.test(phone)) return "Téléphone invalide !";
+    if(!selectedSlot) return "Veuillez choisir un créneau !";
+    return null;
+  }
 
-      emailjs.send("service_xxxxxx","template_rdv_client",{
-        name:name,
-        email:email,
-        phone:phone,
-        date:selectedDay.toLocaleDateString("fr-FR"),
-        time:selectedSlot
-      }).then(()=>{
-        alert(`✅ Rendez-vous confirmé pour ${name} le ${selectedDay.toLocaleDateString("fr-FR")} à ${selectedSlot}`);
-        bookingForm.style.display="none";
-        renderSlots();
-        document.getElementById("clientName").value="";
-        document.getElementById("clientEmail").value="";
-        document.getElementById("clientPhone").value="";
-      }).catch(err=>{
-        console.error("Erreur EmailJS :",err);
-        alert("❌ Erreur lors de l’envoi de l’e-mail de confirmation.");
-      });
+  // Confirmer RDV
+  document.getElementById("confirmBooking").addEventListener("click", ()=>{
+    const name = document.getElementById("clientName").value.trim();
+    const email = document.getElementById("clientEmail").value.trim();
+    const phone = document.getElementById("clientPhone").value.trim();
+
+    const error = validateBooking(name,email,phone);
+    if(error){ alert(error); return; }
+
+    emailjs.send("service_xxxxxx","template_rdv_client",{
+      name: name,
+      email: email,
+      phone: phone,
+      time: selectedSlot
+    }).then(()=>{
+      alert(`✅ Rendez-vous confirmé pour ${name} à ${selectedSlot}`);
+      bookingForm.style.display="none";
+      document.getElementById("clientName").value="";
+      document.getElementById("clientEmail").value="";
+      document.getElementById("clientPhone").value="";
+      document.querySelectorAll(".slot").forEach(s=>s.classList.remove("selected"));
+      selectedSlot = null;
+    }).catch(err=>{
+      console.error("Erreur EmailJS :",err);
+      alert("❌ Erreur lors de l’envoi de l’e-mail de confirmation.");
     });
+  });
+</script>
 
-    document.getElementById("cancelBooking").addEventListener("click",()=>bookingForm.style.display="none");
-
-    // ✅ ADMIN
-    const adminButton=document.getElementById("adminButton");
-    const adminArea=document.getElementById("adminArea");
-    const adminLogin=document.getElementById("adminLogin");
-    const adminPass=document.getElementById("adminPass");
-    const adminPasswordHash="240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
-
-    async function hashText(t){
-      const b=new TextEncoder().encode(t);
-      const h=await crypto.subtle.digest("SHA-256",b);
-      return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,"0")).join("");
-    }
-
-    adminButton.addEventListener("click",()=>{adminLogin.style.display="flex";adminPass.value="";adminPass.focus();});
-    document.getElementById("loginCancel").addEventListener("click",()=>adminLogin.style.display="none");
-    document.getElementById("loginSubmit").addEventListener("click",async()=>{
-      const hashed=await hashText(adminPass.value);
-      if(hashed===adminPasswordHash){adminLogin.style.display="none";adminArea.style.display="block";updateAdminList();}
-      else alert("Mot de passe incorrect !");
-    });
-    document.getElementById("closeAdmin").addEventListener("click",()=>adminArea.style.display="none");
-    document.getElementById("clearRdv").addEventListener("click",()=>{
-      if(confirm("Effacer tous les rendez-vous et messages ?")){
-        rdvList=[];messagesList=[];
-        localStorage.removeItem("rdvList");
-        localStorage.removeItem("messagesList");
-        updateAdminList();
-      }
-    });
-    document.getElementById("printRdv").addEventListener("click",()=>{window.print();});
-  </script>
 </body>
 </html>
