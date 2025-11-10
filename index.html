@@ -360,7 +360,7 @@
       const msg = document.getElementById("privateMessage").value.trim();
       if(!msg){ alert("Écris un message !"); return; }
 
-      emailjs.send("service_xxxxxx", "template_message_client", {
+      emailjs.send("template_4pr16pd", "template_message_client", {
         message: msg,
         date: new Date().toLocaleString("fr-FR")
       }).then(()=>{
